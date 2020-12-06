@@ -32,7 +32,7 @@ transition_data_current
 transition_data_previous <- readRDS("archived_data/transition_data_archived_2020_11_24t09_52.rds")
 transition_data_previous
 
-
+#building table that lists new names
 updated_names <- anti_join(transition_data_current, transition_data_previous, by = "idstring")
 updated_names
 
