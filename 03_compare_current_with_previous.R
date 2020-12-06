@@ -23,15 +23,40 @@ source("02_scrape_nominees.R")
 
 
 #Your code here#
+
+#retrieving data from most updated webscrape
 transition_data_current <- readRDS("processed_data/transition_data_scraped.rds")
 transition_data_current
 
+#retrieving data from previous webscrape
 transition_data_previous <- readRDS("archived_data/transition_data_archived_2020_11_24t09_52.rds")
 transition_data_previous
 
 
 updated_names <- anti_join(transition_data_current, transition_data_previous, by = "idstring")
 updated_names
+
+agencycount_current <- transition_data_current %>% 
+  count(agency, name = "current_count")
+
+agencycount_current
+
+agencycount_previous <- transition_data_previous %>% 
+  count(agency, name = "previous_count")
+
+agencycount_previous
+
+agencycount_compare <- left_join(agencycount_current, agencycount_previous, by = "agency")
+agencycount_compare
+
+agencycount_compare <- agencycount_compare %>% 
+  mutate(
+    change = current_count - previous_count
+  )
+agencycount_compare
+
+agencyteams <- transition_data_current
+
 
 
 
