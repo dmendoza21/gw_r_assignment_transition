@@ -23,8 +23,15 @@ source("02_scrape_nominees.R")
 
 
 #Your code here#
+transition_data_current <- readRDS("processed_data/transition_data_scraped.rds")
+transition_data_current
+
+transition_data_previous <- readRDS("archived_data/transition_data_archived_2020_11_24t09_52.rds")
+transition_data_previous
 
 
+updated_names <- anti_join(transition_data_current, transition_data_previous, by = "idstring")
+updated_names
 
 
 
