@@ -35,10 +35,30 @@ Below write code to show the new names added to the agency review team lists sin
   
 
 ```{r, echo=FALSE}
+#retrieving data from most updated webscrape
+transition_data_current <- readRDS("processed_data/transition_data_scraped.rds")
+transition_data_current
 
+#retrieving data from previous webscrape
+transition_data_previous <- readRDS("archived_data/transition_data_archived_2020_11_24t09_52.rds")
+transition_data_previous
 
+#building table that lists new names
+updated_names <- anti_join(transition_data_current, transition_data_previous, by = "idstring")
+updated_names_important<-updated_names %>% 
+  select(agency,
+         name,
+         most_recent_employment,
+         source_of_funding)
 
+updated_names_important_tbl<-updated_names_important %>% 
+  knitr::kable(
+    caption="New Team Members",
+    col.name=c("Agency", "Name", "Most Recent Employment", "Source of Funding"),
+  ) %>% 
+  kableExtra::kable_material_dark(c("striped", "hover"))
  
+updated_names_important_tbl
 
 ```
 
@@ -49,9 +69,42 @@ Add data to show the total number of people appointed to each agency team, along
   
 
 ```{r, echo=FALSE}
+#finding number of positions from updated data
+agencycount_current <- transition_data_current %>% 
+  count(agency, name = "current_count")
+agencycount_current
+
+#finding number of positions from previous data
+agencycount_previous <- transition_data_previous %>% 
+  count(agency, name = "previous_count")
+agencycount_previous
+
+#joining datasets
+agencycount_compare <- left_join(agencycount_current, agencycount_previous, by = "agency")
+agencycount_compare
+
+#adding change column
+agencycount_compare <- agencycount_compare %>% 
+  mutate(
+    change = current_count - previous_count
+  )
+
+#ommitting agencies with no change
+agencycount_compare<-agencycount_compare %>% 
+  filter(change!=0) %>% 
+  select(agency,
+         change)
 
 
+agencycount_compare_tbl<-agencycount_compare %>% 
+  knitr::kable(
+    caption="Change in Team Members",
+    col.name=c("Agency", "# of New Members"),
+  ) %>% 
+  kableExtra::kable_material_dark(c("striped", "hover"))
 
+agencycount_compare_tbl
+ 
 
 
 ```
@@ -62,7 +115,19 @@ Add data to show the total number of people appointed to each agency team, along
 Show the top 10 **largest** agency review teams as of today:
 
 ```{r, echo=FALSE}
+#Using slice function 
+top_10_agencies<-agencycount_current %>% 
+  arrange(desc(current_count)) %>% 
+  slice(1:10)
 
+top_10_agencies_tbl<-top_10_agencies %>% 
+   knitr::kable(
+    caption="Top 10 Agencies by Amount of Members",
+    col.name=c("Agency", "Current Count"),
+  ) %>% 
+  kableExtra::kable_material_dark(c("striped", "hover"))
+
+top_10_agencies_tbl
 
 
 
@@ -73,6 +138,18 @@ Show the top 10 **largest** agency review teams as of today:
 Show the top **smallest** agency review teams as of today - which we'll define here as less than five members:
 
 ```{r, echo=FALSE}
+smallest_agencies<-agencycount_current %>% 
+  filter(current_count<5) %>% 
+  arrange(desc(current_count))
+
+smallest_agencies_tbl<-smallest_agencies %>% 
+   knitr::kable(
+    caption="Smallest Agencies by Amount of Members",
+    col.name=c("Agency", "Current Count"),
+  ) %>% 
+  kableExtra::kable_material_dark(c("striped", "hover"))
+
+smallest_agencies_tbl
 
 
 
@@ -93,6 +170,26 @@ Below write code to show the new names added to the senior staff lists since the
   
 
 ```{r, echo=FALSE}
+
+myurl2 <- "https://buildbackbetter.gov/the-administration/white-house-senior-staff/"
+website2 <- GET(myurl2) 
+names2 <- html_nodes(content(website2), "h3")
+num_names_staff <- length(html_text(names2, trim = TRUE))
+#we'll use this length to create sequential numbers vector to match
+num_names_staff <- seq(1, num_names_staff)
+num_names_staff
+
+#now we'll feed the sequence of numbers into the function
+staff_data_scraped <- map_df(num_names_staff, scrape_names_staff)
+
+#add a unique ID field string
+staff_data_scraped <- staff_data_scraped %>% 
+  mutate(
+    idstring = str_trim(paste0(name, title))
+  ) %>% 
+  as_tibble()
+
+staff_data_scraped
 
 
 
