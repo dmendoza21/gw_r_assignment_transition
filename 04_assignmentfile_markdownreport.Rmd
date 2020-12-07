@@ -264,6 +264,27 @@ Add code to show the total number of people currently named to the WH senior sta
   
 
 ```{r, echo=FALSE}
+#Creating first value from number of rows
+current_senior_staff_value<-readRDS("processed_data/staff_data_scraped.rds") %>% 
+  nrow()
+
+#Creating second value from number of rows
+previous_senior_staff_value<-readRDS("archived_data/staff_data_archived_2020_11_24t14_00.rds") %>% 
+  nrow()
+
+comparing_members_df<-data.frame(current_senior_staff_value, previous_senior_staff_value)
+
+comparing_members_table<-comparing_members_df %>% 
+  knitr::kable(
+    caption="Comparing Old vs. New Number of Members",
+    col.name=c("Current Amount", "Previous Amount"),
+  ) %>% 
+  kableExtra::kable_material_dark(c("striped", "hover"))
+
+comparing_members_table
+
+
+
 
 
 
