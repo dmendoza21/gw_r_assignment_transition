@@ -171,18 +171,45 @@ Below write code to show the new names added to the senior staff lists since the
 
 ```{r, echo=FALSE}
 
+#Creating the scrape function
+scrape_names_staff <- function(namenum) {
+  #set url for nominees list page
+  url <- "https://buildbackbetter.gov/the-administration/white-house-senior-staff/"
+  #perform the GET call
+  website1 <- GET(url)
+  
+  #grab the names
+  names <- html_nodes(content(website1), "h3")
+  #isolate just one
+  name1 <- print(html_text(names, trim = TRUE)[[namenum]])
+  
+  #grab the titles
+  titles <- html_nodes(content(website1), "span.acctext--con")
+  #show just one
+  title1 <- print(html_text(titles, trim = TRUE)[[namenum]])
+  
+  #grab the links
+  links <- html_nodes(content(website1), "a.full-link")
+  #show just one
+  link1 <- html_attr(links, 'href')[[namenum]]
+  
+  #combine into dataframe
+  df <- data.frame("name" = name1, "title" = title1, "link" = link1)
+  
+  return(df)
+  
+}
+
+scrape_names_staff(1)
+
+#Loop through all the names on the site.
 myurl2 <- "https://buildbackbetter.gov/the-administration/white-house-senior-staff/"
 website2 <- GET(myurl2) 
 names2 <- html_nodes(content(website2), "h3")
 num_names_staff <- length(html_text(names2, trim = TRUE))
-#we'll use this length to create sequential numbers vector to match
 num_names_staff <- seq(1, num_names_staff)
 num_names_staff
-
-#now we'll feed the sequence of numbers into the function
 staff_data_scraped <- map_df(num_names_staff, scrape_names_staff)
-
-#add a unique ID field string
 staff_data_scraped <- staff_data_scraped %>% 
   mutate(
     idstring = str_trim(paste0(name, title))
@@ -191,6 +218,39 @@ staff_data_scraped <- staff_data_scraped %>%
 
 staff_data_scraped
 
+#Save the data
+saveRDS(staff_data_scraped, "processed_data/staff_data_scraped.rds")
+write_xlsx(staff_data_scraped, "processed_data/staff_data_scraped.xlsx")
+
+filestring <- paste0("archived_data/staff_data_archived_", Sys.time())
+filestring <- str_replace_all(filestring, "-", "_")
+filestring <- str_replace_all(filestring, ":", "_")
+filestring <- str_replace(filestring, " ", "t")
+filestring <- str_sub(filestring, 1, -4L)
+filestring <- paste0(filestring, ".rds")
+saveRDS(staff_data_scraped, filestring)
+
+#Join the two datasets together to figure out which names are new.
+current_senior_staff<-readRDS("processed_data/staff_data_scraped.rds")
+previous_senior_staff<-readRDS("archived_data/staff_data_archived_2020_11_24t14_00.rds")
+
+
+updated_senior_staff <- anti_join(current_senior_staff, previous_senior_staff, by = "idstring")
+senior_staff_important<-updated_senior_staff %>% 
+  select(name,
+         title)
+
+senior_staff_important
+
+#Making more suitable chart
+new_staff_tbl<-senior_staff_important %>% 
+  knitr::kable(
+    caption="New Senior Staff Members",
+    col.name=c("Name", "Title"),
+  ) %>% 
+  kableExtra::kable_material_dark(c("striped", "hover"))
+
+new_staff_tbl
 
 
  
@@ -204,6 +264,8 @@ Add code to show the total number of people currently named to the WH senior sta
   
 
 ```{r, echo=FALSE}
+
+
 
 
 
